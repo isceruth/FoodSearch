@@ -11,13 +11,10 @@ import android.view.ViewGroup;
 
 import java.util.ArrayList;
 
-/**
- * Created by SONU on 16/09/15.
- */
 public class DummyFragment extends Fragment {
     private View view;
 
-    private String title;//String for tab title
+    private String title; //String for tab title
 
     private static RecyclerView recyclerView;
 

@@ -7,6 +7,7 @@ import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Looper;
 import android.provider.Settings;
@@ -40,6 +41,9 @@ import com.google.android.gms.tasks.Task;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedWriter;
+import java.io.DataOutputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 
@@ -95,7 +99,9 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 getLastLocation();
                 Intent transition = new Intent(MainActivity.this, ResultActivity.class);
-                startActivity(transition);
+                //startActivity(transition);
+                AsyncJSON jsonRequest = new AsyncJSON();
+                jsonRequest.execute();
                 /*try {
                     sendJSON();
                 } catch (JSONException e) {
@@ -112,21 +118,23 @@ public class MainActivity extends AppCompatActivity {
         json.put("message", "null");
         JSONObject main = new JSONObject();
         main.put("description", "null");
-        main.put("lat", String.valueOf(latitude));
-        main.put("lon", String.valueOf(longitude));
+        main.put("lat", latitude);
+        main.put("lon", longitude);
         json.put("location", main);
         final Thread thread = new Thread(new Runnable() {
             public void run() {
                 try {
                 Socket s = new Socket("77.47.190.28", 9991);
                 Log.w(TAG, String.valueOf(s.isConnected()));
-                final OutputStreamWriter out = new OutputStreamWriter(
-                        s.getOutputStream());
+                final DataOutputStream os = new DataOutputStream(s.getOutputStream());
                 runOnUiThread(new Thread(new Runnable() {
                     @Override
                     public void run() {
                         try {
-                            out.write(json.toString());
+                                os.writeInt(json.toString().getBytes().length);
+                                Log.i(TAG, String.valueOf(json.toString().getBytes().length));
+                                os.write(json.toString().getBytes());
+                                os.flush();
                             Log.i(TAG, json.toString());
                         }
                         catch (Exception e) {
@@ -155,6 +163,48 @@ public class MainActivity extends AppCompatActivity {
             if (savedInstanceState.keySet().contains(KEY_LOCATION)) {
                 mCurrentLocation = savedInstanceState.getParcelable(KEY_LOCATION);
             }
+        }
+    }
+
+    class AsyncJSON extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... voids) {
+            final JSONObject json = new JSONObject();
+            try {
+                json.put("query", mSearchQuery.getText());
+                json.put("message", "null");
+                JSONObject main = new JSONObject();
+                main.put("description", "null");
+                main.put("lat", latitude);
+                main.put("lon", longitude);
+                json.put("location", main);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            try {
+                Socket s = new Socket("77.47.190.28", 9991);
+                Log.w(TAG, String.valueOf(s.isConnected()));
+                final DataOutputStream os = new DataOutputStream(s.getOutputStream());
+                try {
+                    os.writeInt(json.toString().getBytes().length);
+                    Log.i(TAG, String.valueOf(json.toString().getBytes().length));
+                    os.write(json.toString().getBytes());
+                    os.flush();
+                    Log.i(TAG, json.toString());
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            Log.i(TAG, "WE DID IT REDDIT!");
         }
     }
 
