@@ -59,5 +59,15 @@
                 android:text="@string/search_button" />
         </LinearLayout>
 
+        <EditText
+            android:id="@+id/edit_ip"
+            android:layout_width="220dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="100dp"
+            android:hint="@string/type_something"
+            android:inputType="text"
+            android:autofillHints="" />
+
     </LinearLayout>
 </android.support.design.widget.CoordinatorLayout>

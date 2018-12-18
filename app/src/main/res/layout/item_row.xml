@@ -8,7 +8,7 @@
     android:layout_marginRight="10dp"
     android:layout_marginTop="10dp"
     app:cardCornerRadius="3dp"
-    app:cardElevation="1dp">
+    app:cardElevation="3dp">
 
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
@@ -22,7 +22,7 @@
             android:layout_marginLeft="8dp"
             android:layout_marginRight="8dp"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/cardTitle"
@@ -30,30 +30,20 @@
                 android:textStyle="normal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:maxLines="1"/>
-
-            <TextView
-                android:id="@+id/cardMeal"
-                android:fontFamily="sans-serif-condensed"
-                android:textStyle="normal"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="4dp"
-                android:layout_marginTop="4dp"
-                android:gravity="left|bottom"
+                android:layout_marginTop="5dp"
                 android:maxLines="1"
-                android:textSize="16sp"/>
+                android:textSize="20sp"/>
 
             <TextView
-                android:id="@+id/cardPrice"
-                android:fontFamily="sans-serif-condensed"
+                android:id="@+id/cardDescription"
+                android:fontFamily="sans-serif"
                 android:textStyle="normal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:gravity="right"
                 android:maxLines="2"
-                android:textSize="18sp"/>
+                android:textColor="@color/description"
+                android:textSize="16sp"/>
         </LinearLayout>
 
         <View
@@ -65,18 +55,27 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:padding="4dp">
+            android:padding="4dp"
+            android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/cardDescription"
+                android:id="@+id/cardMeal"
                 android:fontFamily="sans-serif-condensed"
                 android:textStyle="normal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="8dp"
-                android:maxLines="20">
-            </TextView>
+                android:textSize="16sp"
+                android:maxLines="1"/>
+
+                <TextView
+                    android:id="@+id/cardPrice"
+                    android:fontFamily="sans-serif-condensed"
+                    android:textStyle="normal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:layout_marginLeft="4dp"/>
         </LinearLayout>
 
     </LinearLayout>

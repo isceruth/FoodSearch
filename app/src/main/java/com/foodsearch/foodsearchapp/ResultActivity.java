@@ -1,5 +1,8 @@
 package com.foodsearch.foodsearchapp;
 
+import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -17,24 +20,21 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-class RestaurantInfo {
+class RestaurantInfo implements Comparable {
     public String restName;
     public String address;
-    public int price;
+    public String price;
     public String meal;
+    //public Geocoder coder = new Geocoder(ResultActivity.getAppContext());
 
     public String getMeal() {
         return meal;
@@ -60,12 +60,58 @@ class RestaurantInfo {
         this.address = address;
     }
 
-    public double getPrice() {
+    public String getPrice() {
         return price;
     }
 
-    public void setPrice(int price) {
+    public void setPrice(String price) {
         this.price = price;
+    }
+
+    /*@Override
+    public int compareTo(Object o) {
+        List<Address> addressStart;
+        List<Address> addressFinish;
+        float[] resS = new float[3];
+        float[] resF = new float[3];
+        double latS, latF, lonS, lonF;
+        Geocoder coder = new Geocoder(ResultActivity.getAppContext());
+        try {
+            addressStart = coder.getFromLocationName(getAddress(), 5);
+            addressFinish = coder.getFromLocationName(((RestaurantInfo) o).getAddress(), 5);
+
+            if (addressStart == null && addressFinish == null) {
+                return 0;
+            }
+
+            if (addressStart == null) {
+                return -1;
+            }
+
+            if (addressFinish == null) {
+                return 1;
+            }
+
+            Log.i("TAG", "SIZE IS " + String.valueOf(addressStart.size()));
+
+            Address locationStart = addressStart.get(0);
+            latS = locationStart.getLatitude();
+            lonS = locationStart.getLongitude();
+            Location.distanceBetween(MainActivity.latitude, MainActivity.longitude, latS, lonS, resS);
+
+            Address locationFinish = addressFinish.get(0);
+            latF = locationFinish.getLatitude();
+            lonF = locationFinish.getLongitude();
+            Location.distanceBetween(MainActivity.latitude, MainActivity.longitude, latF, lonF, resF);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return resS[0] < resF[0] ? -1 : 1;
+    }*/
+    @Override
+    public int compareTo(Object o) {
+        return (Float.valueOf(getPrice()) < Float.valueOf(((RestaurantInfo) o).getPrice())) ? -1 : 1;
     }
 }
 
@@ -75,12 +121,15 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
     private MapView mMapView;
     public GoogleMap mGoogleMap;
     public LatLng lPoint;
+    public static Context mContext;
 
     public ArrayList<RestaurantInfo> resList;
     public JSONObject result;
+    Geocoder coder;
 
     private static ViewPager viewPager;
     private static TabLayout tabLayout;
+    public ArrayList<LatLng> markers = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,17 +137,26 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result);
 
+        ResultActivity.mContext = getApplicationContext();
+        coder = new Geocoder(ResultActivity.getAppContext());
+
         try {
             result = new JSONObject(getIntent().getStringExtra("resultJson"));
             resList = new ArrayList<>();
             JSONArray array = result.getJSONArray("data");
-            for ( int i = 0; i < array.length(); i++) {
+            for (int i = 0; i < array.length(); i++) {
                 RestaurantInfo dto = new RestaurantInfo();
                 dto.setMeal((String) array.getJSONObject(i).get("description"));
-                dto.setPrice((int) array.getJSONObject(i).get("price"));
+                dto.setPrice(String.valueOf(array.getJSONObject(i).get("price")));
                 dto.setRestName((String) (array.getJSONObject(i).getJSONObject("restaurant")).get("name"));
                 dto.setAddress(array.getJSONObject(i).getJSONObject("restaurant").getJSONObject("location").getString("description").split(";")[0]);
-                resList.add(dto);
+                if ((dto.getAddress()).equals("null")) {
+                    Log.i("TAG", "Skipped");
+                } else {
+                    resList.add(dto);
+                    LatLng point = getLocationFromAddress(dto.getAddress());
+                    markers.add(point);
+                }
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -120,10 +178,8 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
                 viewPager.setCurrentItem(tab.getPosition());//setting current selected item over viewpager
                 switch (tab.getPosition()) {
                     case 0:
-                        markerOnMap(mGoogleMap);
                         break;
                     case 1:
-                        markerOnMap(mGoogleMap);
                         break;
                 }
             }
@@ -138,19 +194,65 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
         });
     }
 
+    public static Context getAppContext() {
+        return ResultActivity.mContext;
+    }
+
+    public LatLng getLocationFromAddress(String strAddress) {
+
+        List<Address> address;
+        LatLng p1 = null;
+
+        try {
+            Log.i("TAG", strAddress);
+            address = coder.getFromLocationName(strAddress, 5);
+
+            if (address == null) {
+                return null;
+            }
+
+            if (address.size() == 0) {
+                p1 = new LatLng(0,0);
+                return p1;
+            }
+
+            Address location = address.get(0);
+            p1 = new LatLng(location.getLatitude(), location.getLongitude() );
+
+        } catch (IOException ex) {
+
+            ex.printStackTrace();
+        }
+
+        return p1;
+    }
+
     private void setupViewPager(ViewPager viewPager) {
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
-        adapter.addFrag(new DummyFragment("Ближайшие", null), "Nearest");
-        adapter.addFrag(new DummyFragment("Лучшие", null), "Best");
+        adapter.addFrag(new DummyFragment("PRICE"), "Cheapest");
+        adapter.addFrag(new DummyFragment("BEST"), "Best");
         viewPager.setAdapter(adapter);
     }
 
     @Override
     public void onMapReady(GoogleMap map) {
         mGoogleMap = map;
-        LatLng point = new LatLng(50.449480, 30.461201);
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(point,11));
+        /*if (MainActivity.latitude != 0) {
+            LatLng point = new LatLng(MainActivity.latitude, MainActivity.longitude);
+            map.animateCamera(CameraUpdateFactory.newLatLngZoom(point,11));
+        }*/
+        for (int i = 0; i < markers.size(); i++) {
+            if (markers.get(i).latitude != 0){
+                map.addMarker(new MarkerOptions().position(markers.get(i)));
+            }
+        }
         map.setMyLocationEnabled(true);
+    }
+
+    public void setMarkerMap(GoogleMap map) {
+        mGoogleMap = map;
+        LatLng point = new LatLng(MainActivity.latitude, MainActivity.longitude);
+        map.animateCamera(CameraUpdateFactory.newLatLngZoom(point,11));
     }
 
     class ViewPagerAdapter extends FragmentPagerAdapter {
@@ -172,7 +274,6 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
         }
 
 
-        //adding fragments and title method
         public void addFrag(Fragment fragment, String title) {
             mFragmentList.add(fragment);
             mFragmentTitleList.add(title);

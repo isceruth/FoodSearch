@@ -2,6 +2,8 @@ package com.foodsearch.foodsearchapp;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
@@ -23,7 +25,6 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
-import com.google.android.gms.common.api.Result;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -41,12 +42,8 @@ import com.google.android.gms.tasks.Task;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedWriter;
-import java.io.DataInput;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.Socket;
 
 public class MainActivity extends AppCompatActivity {
@@ -68,8 +65,9 @@ public class MainActivity extends AppCompatActivity {
     private LocationSettingsRequest mLocationSettingsRequest;
     private LocationCallback mLocationCallback;
     private Location mCurrentLocation;
-    public double latitude;
-    public double longitude;
+    public static double latitude;
+    public static double longitude;
+    public static Context mContext;
 
     int resultLen;
     byte[] result;
@@ -83,6 +81,8 @@ public class MainActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        MainActivity.mContext = MainActivity.this;
 
         mSearchButton = findViewById(R.id.search_button);
         mSearchQuery = findViewById(R.id.edit_query);
@@ -109,6 +109,10 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public static Context getAppContext() {
+        return MainActivity.mContext;
+    }
+
     private void updateValuesFromBundle(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             if (savedInstanceState.keySet().contains(KEY_REQUESTING_LOCATION_UPDATES)) {
@@ -123,11 +127,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     class AsyncJSON extends AsyncTask<Void, Void, Void> {
+
+        private ProgressDialog dialog;
+
+        protected void onPreExecute() {
+            dialog = new ProgressDialog(MainActivity.getAppContext());
+            this.dialog.setMessage("Waiting for server response...");
+            this.dialog.show();
+        }
+
         @Override
         protected Void doInBackground(Void... voids) {
             final JSONObject json = new JSONObject();
             try {
-                Socket s = new Socket("77.47.190.28", 9991);
+                EditText ip = (EditText) findViewById(R.id.edit_ip);
+                String hostIp;
+                if ("".equals(ip.getText().toString())) {
+                    hostIp = Constants.HOST;
+                } else {
+                    hostIp = ip.getText().toString();
+                }
+                Socket s = new Socket(hostIp, 9991);
                 final DataOutputStream os = new DataOutputStream(s.getOutputStream());
                 final DataInputStream is = new DataInputStream(s.getInputStream());
 
@@ -166,10 +186,20 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid){
             super.onPostExecute(aVoid);
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+            }
             try {
                 JSONObject res = new JSONObject(new String(result));
+                //Log.i("TAG", res.get("data").toString());
+                if ((res.get("data").toString().equals("[]"))) {
+                    Toast.makeText(MainActivity.getAppContext(), "We haven't found anything, try again!", Toast.LENGTH_LONG).show();
+                    return;
+                }
                 Intent transition = new Intent(MainActivity.this, ResultActivity.class);
                 transition.putExtra("resultJson", res.toString());
+                transition.putExtra("latitude", latitude);
+                transition.putExtra("longitude", longitude);
                 startActivity(transition);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -258,7 +288,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @SuppressWarnings("MissingPermission")
-    private void getLastLocation() {
+    public void getLastLocation() {
         mFusedLocationClient.getLastLocation()
                 .addOnCompleteListener(this, new OnCompleteListener<Location>() {
                     @Override

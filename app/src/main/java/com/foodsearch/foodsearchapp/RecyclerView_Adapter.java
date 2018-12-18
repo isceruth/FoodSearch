@@ -33,7 +33,7 @@ public class RecyclerView_Adapter extends
 
         final ViewHolder mainHolder = (ViewHolder) holder;
         mainHolder.title.setText(arrayList.get(position).getRestName());
-        mainHolder.price.setText(Double.toString(arrayList.get(position).getPrice()));
+        mainHolder.price.setText(arrayList.get(position).getPrice() + " грн");
         mainHolder.meal.setText(arrayList.get(position).getMeal());
         mainHolder.description.setText(arrayList.get(position).getAddress());
     }
