@@ -42,6 +42,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedWriter;
+import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -68,6 +70,9 @@ public class MainActivity extends AppCompatActivity {
     private Location mCurrentLocation;
     public double latitude;
     public double longitude;
+
+    int resultLen;
+    byte[] result;
 
     private Button mSearchButton;
     private EditText mSearchQuery;
@@ -98,60 +103,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 getLastLocation();
-                Intent transition = new Intent(MainActivity.this, ResultActivity.class);
-                //startActivity(transition);
                 AsyncJSON jsonRequest = new AsyncJSON();
                 jsonRequest.execute();
-                /*try {
-                    sendJSON();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }*/
-                Log.w(TAG, String.valueOf(longitude) + " warcraft");
             }
         });
     }
-
-    private void sendJSON() throws JSONException {
-        final JSONObject json = new JSONObject();
-        json.put("query", mSearchQuery.getText());
-        json.put("message", "null");
-        JSONObject main = new JSONObject();
-        main.put("description", "null");
-        main.put("lat", latitude);
-        main.put("lon", longitude);
-        json.put("location", main);
-        final Thread thread = new Thread(new Runnable() {
-            public void run() {
-                try {
-                Socket s = new Socket("77.47.190.28", 9991);
-                Log.w(TAG, String.valueOf(s.isConnected()));
-                final DataOutputStream os = new DataOutputStream(s.getOutputStream());
-                runOnUiThread(new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                                os.writeInt(json.toString().getBytes().length);
-                                Log.i(TAG, String.valueOf(json.toString().getBytes().length));
-                                os.write(json.toString().getBytes());
-                                os.flush();
-                            Log.i(TAG, json.toString());
-                        }
-                        catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }));
-                Log.w(TAG, "Sent packet!");
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        thread.start();
-        }
 
     private void updateValuesFromBundle(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
@@ -171,6 +127,10 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(Void... voids) {
             final JSONObject json = new JSONObject();
             try {
+                Socket s = new Socket("77.47.190.28", 9991);
+                final DataOutputStream os = new DataOutputStream(s.getOutputStream());
+                final DataInputStream is = new DataInputStream(s.getInputStream());
+
                 json.put("query", mSearchQuery.getText());
                 json.put("message", "null");
                 JSONObject main = new JSONObject();
@@ -178,33 +138,42 @@ public class MainActivity extends AppCompatActivity {
                 main.put("lat", latitude);
                 main.put("lon", longitude);
                 json.put("location", main);
+
+                os.writeInt(json.toString().getBytes().length);
+                Log.i(TAG, String.valueOf(json.toString().getBytes().length));
+                os.write(json.toString().getBytes());
+                os.flush();
+                Log.i(TAG, json.toString());
+                Log.i(TAG, "WE DID IT REDDIT!" + String.valueOf(resultLen));
+                resultLen = is.readInt();
+                result = new byte[resultLen];
+                is.readFully(result);
+                is.close();
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
             try {
-                Socket s = new Socket("77.47.190.28", 9991);
-                Log.w(TAG, String.valueOf(s.isConnected()));
-                final DataOutputStream os = new DataOutputStream(s.getOutputStream());
-                try {
-                    os.writeInt(json.toString().getBytes().length);
-                    Log.i(TAG, String.valueOf(json.toString().getBytes().length));
-                    os.write(json.toString().getBytes());
-                    os.flush();
-                    Log.i(TAG, json.toString());
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
             return null;
         }
 
         @Override
-        protected void onPostExecute(Void aVoid) {
+        protected void onPostExecute(Void aVoid){
             super.onPostExecute(aVoid);
-            Log.i(TAG, "WE DID IT REDDIT!");
+            try {
+                JSONObject res = new JSONObject(new String(result));
+                Intent transition = new Intent(MainActivity.this, ResultActivity.class);
+                transition.putExtra("resultJson", res.toString());
+                startActivity(transition);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 

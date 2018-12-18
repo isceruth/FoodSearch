@@ -9,15 +9,14 @@ import java.util.ArrayList;
 
 public class RecyclerView_Adapter extends
         RecyclerView.Adapter<ViewHolder> {
-    private ArrayList<String> arrayList;
+    private ArrayList<RestaurantInfo> arrayList;
     private Context context;
 
 
     public RecyclerView_Adapter(Context context,
-                                ArrayList<String> arrayList) {
+                                ArrayList<RestaurantInfo> arrayList) {
         this.context = context;
         this.arrayList = arrayList;
-
     }
 
 
@@ -33,9 +32,10 @@ public class RecyclerView_Adapter extends
 
 
         final ViewHolder mainHolder = (ViewHolder) holder;
-        //Setting text over textview
-        mainHolder.title.setText(arrayList.get(position));
-
+        mainHolder.title.setText(arrayList.get(position).getRestName());
+        mainHolder.price.setText(Double.toString(arrayList.get(position).getPrice()));
+        mainHolder.meal.setText(arrayList.get(position).getMeal());
+        mainHolder.description.setText(arrayList.get(position).getAddress());
     }
 
     @Override

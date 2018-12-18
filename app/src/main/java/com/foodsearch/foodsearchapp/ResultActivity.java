@@ -17,9 +17,57 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+class RestaurantInfo {
+    public String restName;
+    public String address;
+    public int price;
+    public String meal;
+
+    public String getMeal() {
+        return meal;
+    }
+
+    public void setMeal(String meal) {
+        this.meal = meal;
+    }
+
+    public String getRestName() {
+        return restName;
+    }
+
+    public void setRestName(String restName) {
+        this.restName = restName;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(int price) {
+        this.price = price;
+    }
+}
 
 public class ResultActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -27,6 +75,9 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
     private MapView mMapView;
     public GoogleMap mGoogleMap;
     public LatLng lPoint;
+
+    public ArrayList<RestaurantInfo> resList;
+    public JSONObject result;
 
     private static ViewPager viewPager;
     private static TabLayout tabLayout;
@@ -36,6 +87,22 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result);
+
+        try {
+            result = new JSONObject(getIntent().getStringExtra("resultJson"));
+            resList = new ArrayList<>();
+            JSONArray array = result.getJSONArray("data");
+            for ( int i = 0; i < array.length(); i++) {
+                RestaurantInfo dto = new RestaurantInfo();
+                dto.setMeal((String) array.getJSONObject(i).get("description"));
+                dto.setPrice((int) array.getJSONObject(i).get("price"));
+                dto.setRestName((String) (array.getJSONObject(i).getJSONObject("restaurant")).get("name"));
+                dto.setAddress(array.getJSONObject(i).getJSONObject("restaurant").getJSONObject("location").getString("description").split(";")[0]);
+                resList.add(dto);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         final SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -53,11 +120,9 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
                 viewPager.setCurrentItem(tab.getPosition());//setting current selected item over viewpager
                 switch (tab.getPosition()) {
                     case 0:
-                        Log.e("TAG","TAB1");
                         markerOnMap(mGoogleMap);
                         break;
                     case 1:
-                        Log.e("TAG","TAB2");
                         markerOnMap(mGoogleMap);
                         break;
                 }
@@ -75,8 +140,8 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
 
     private void setupViewPager(ViewPager viewPager) {
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
-        adapter.addFrag(new DummyFragment("Ближайшие"), "Nearest");
-        adapter.addFrag(new DummyFragment("Лучшие"), "Best");
+        adapter.addFrag(new DummyFragment("Ближайшие", null), "Nearest");
+        adapter.addFrag(new DummyFragment("Лучшие", null), "Best");
         viewPager.setAdapter(adapter);
     }
 
@@ -85,6 +150,7 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
         mGoogleMap = map;
         LatLng point = new LatLng(50.449480, 30.461201);
         map.animateCamera(CameraUpdateFactory.newLatLngZoom(point,11));
+        map.setMyLocationEnabled(true);
     }
 
     class ViewPagerAdapter extends FragmentPagerAdapter {
