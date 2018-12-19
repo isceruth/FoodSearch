@@ -90,16 +90,21 @@ public class DummyFragment extends Fragment {
         final ArrayList<RestaurantInfo> nearest = new ArrayList<>();
         ArrayList<RestaurantInfo> nearestF = new ArrayList<>();
         RecyclerView_Adapter adapter;
+        int limit = 5;
 
         switch (title) {
             case "BEST":
-                for (int i = 0; i < 5; i++) {
+                if (res.size() < 5) {
+                    limit = res.size();
+                }
+                for (int i = 0; i < limit; i++) {
                     best.add(res.get(i));
                 }
                 adapter = new RecyclerView_Adapter(getActivity(), best);
                 recyclerView.setAdapter(adapter);
                 break;
             case "PRICE":
+                limit = 5;
                /* AsyncSort sorting = new AsyncSort();
                 try {
                     sorting.execute(nearest, res, nearestF).get();
@@ -110,7 +115,10 @@ public class DummyFragment extends Fragment {
                 nearest.addAll(resS);
                 Collections.copy(nearest, resS);
                 Collections.sort(nearest);
-                for (int i = 0; i < 5; i++) {
+                if (nearest.size() < 5) {
+                    limit = nearest.size();
+                }
+                for (int i = 0; i < limit; i++) {
                     nearestF.add(nearest.get(i));
                 }
 

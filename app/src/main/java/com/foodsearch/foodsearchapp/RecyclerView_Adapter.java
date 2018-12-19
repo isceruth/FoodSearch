@@ -3,7 +3,12 @@ package com.foodsearch.foodsearchapp;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
+
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 
@@ -11,7 +16,6 @@ public class RecyclerView_Adapter extends
         RecyclerView.Adapter<ViewHolder> {
     private ArrayList<RestaurantInfo> arrayList;
     private Context context;
-
 
     public RecyclerView_Adapter(Context context,
                                 ArrayList<RestaurantInfo> arrayList) {
@@ -28,19 +32,27 @@ public class RecyclerView_Adapter extends
 
     @Override
     public void onBindViewHolder(ViewHolder holder,
-                                 int position) {
-
+                                 final int position) {
 
         final ViewHolder mainHolder = (ViewHolder) holder;
         mainHolder.title.setText(arrayList.get(position).getRestName());
         mainHolder.price.setText(arrayList.get(position).getPrice() + " грн");
         mainHolder.meal.setText(arrayList.get(position).getMeal());
         mainHolder.description.setText(arrayList.get(position).getAddress());
+
+        /*holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                LatLng point = ((ResultActivity) getActivity()).getLocationFromAddress(mainHolder.description);
+                ((ResultActivity) getActivity()).mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(point, 11));
+            }
+        });*/
     }
 
     @Override
     public ViewHolder onCreateViewHolder(
             ViewGroup viewGroup, int viewType) {
+
         LayoutInflater mInflater = LayoutInflater.from(viewGroup.getContext());
 
         ViewGroup mainGroup = (ViewGroup) mInflater.inflate(

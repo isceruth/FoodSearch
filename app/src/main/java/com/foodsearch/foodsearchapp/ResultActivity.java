@@ -129,7 +129,7 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
 
     private static ViewPager viewPager;
     private static TabLayout tabLayout;
-    public ArrayList<LatLng> markers = new ArrayList<>();
+    public ArrayList<Object[]> markers = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -145,6 +145,7 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
             resList = new ArrayList<>();
             JSONArray array = result.getJSONArray("data");
             for (int i = 0; i < array.length(); i++) {
+                Object[] point = new Object[2];
                 RestaurantInfo dto = new RestaurantInfo();
                 dto.setMeal((String) array.getJSONObject(i).get("description"));
                 dto.setPrice(String.valueOf(array.getJSONObject(i).get("price")));
@@ -154,7 +155,8 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
                     Log.i("TAG", "Skipped");
                 } else {
                     resList.add(dto);
-                    LatLng point = getLocationFromAddress(dto.getAddress());
+                    point[0] = (LatLng) getLocationFromAddress(dto.getAddress());
+                    point[1] = (String) (array.getJSONObject(i).getJSONObject("restaurant")).get("name");
                     markers.add(point);
                 }
             }
@@ -175,7 +177,7 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                viewPager.setCurrentItem(tab.getPosition());//setting current selected item over viewpager
+                viewPager.setCurrentItem(tab.getPosition());
                 switch (tab.getPosition()) {
                     case 0:
                         break;
@@ -242,8 +244,10 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
             map.animateCamera(CameraUpdateFactory.newLatLngZoom(point,11));
         }*/
         for (int i = 0; i < markers.size(); i++) {
-            if (markers.get(i).latitude != 0){
-                map.addMarker(new MarkerOptions().position(markers.get(i)));
+            LatLng pt = (LatLng) markers.get(i)[0];
+            String name = (String) markers.get(i)[1];
+            if (pt.latitude != 0){
+                map.addMarker(new MarkerOptions().position(pt).title(name));
             }
         }
         map.setMyLocationEnabled(true);
@@ -256,8 +260,8 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
     }
 
     class ViewPagerAdapter extends FragmentPagerAdapter {
-        private final List<Fragment> mFragmentList = new ArrayList<>();//fragment arraylist
-        private final List<String> mFragmentTitleList = new ArrayList<>();//title arraylist
+        private final List<Fragment> mFragmentList = new ArrayList<>();
+        private final List<String> mFragmentTitleList = new ArrayList<>();
 
         public ViewPagerAdapter(FragmentManager manager) {
             super(manager);
