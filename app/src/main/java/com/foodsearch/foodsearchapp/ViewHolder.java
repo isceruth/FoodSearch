@@ -4,6 +4,9 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.TextView;
 
+/**
+ * Stores data of each view
+ */
 public abstract class ViewHolder extends RecyclerView.ViewHolder {
 
     public TextView title;

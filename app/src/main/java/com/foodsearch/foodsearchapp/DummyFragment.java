@@ -1,6 +1,5 @@
 package com.foodsearch.foodsearchapp;
 
-import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -10,13 +9,13 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
-import static java.lang.Thread.sleep;
-
+/**
+ * Creates and populates tabs in application with restaurant data.
+ */
 public class DummyFragment extends Fragment {
     private View view;
     public ArrayList<RestaurantInfo> near;
@@ -25,13 +24,27 @@ public class DummyFragment extends Fragment {
 
     private static RecyclerView recyclerView;
 
+    /**
+     * Default constructor
+     */
     public DummyFragment() {
     }
 
+    /**
+     * Constructor for creating a tab with specified title
+     * @param title - Title for tab on Result tab
+     */
     public DummyFragment(String title) {
         this.title = title;
     }
 
+    /**
+     * Called to have the fragment instantiate its user interface view
+     * @param inflater - template to create a view with certain paremeters
+     * @param container - container to which created view will belong
+     * @param savedInstanceState - saving view information during view creation
+     * @return - return created view
+     */
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -44,7 +57,17 @@ public class DummyFragment extends Fragment {
 
     }
 
+    /**
+     * Class that does sorting operation of RestaurantInfo object in separate from UI thread
+     */
     public class AsyncSort extends AsyncTask<Object, Void, Object[]> {
+
+        /**
+         * Method that automatically executed first after execute() call of a class instance.
+         * Sorts Object ArrayList;
+         * @param info - all the required info for sorting Object array
+         * @return - sorted array
+         */
         @Override
         protected Object[] doInBackground(Object... info) {
             ArrayList<RestaurantInfo> nearest, res, nearestF;
@@ -60,6 +83,11 @@ public class DummyFragment extends Fragment {
             return toExecute;
         }
 
+        /**
+         * Method that automatically executed after doInBackground() finished.
+         * Adds first five Objects to another ArrayList that will be rendered on result screen.
+         * @param info - two ArrayLists passed from doInBackground() method
+         */
         @Override
         protected void onPostExecute(Object... info) {
             ArrayList<RestaurantInfo> nearest, nearestF;
@@ -73,10 +101,18 @@ public class DummyFragment extends Fragment {
         }
     }
 
+    /**
+     * Assigns to class member final sorted ArrayList
+     * @param nearF - sorted ArrayList
+     */
     public void getNearest(ArrayList<RestaurantInfo> nearF) {
         near = nearF;
     }
 
+    /**
+     * Setting recycler view, creating two tabs with sorted ArrayLists
+     * @param res - ArrayList of restaurants
+     */
     private void setRecyclerView(ArrayList<RestaurantInfo> res) {
 
         recyclerView = (RecyclerView) view

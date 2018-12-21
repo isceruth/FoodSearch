@@ -3,33 +3,44 @@ package com.foodsearch.foodsearchapp;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
-
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 
+/**
+ * Adapter for RecyclerView
+ */
 public class RecyclerView_Adapter extends
         RecyclerView.Adapter<ViewHolder> {
     private ArrayList<RestaurantInfo> arrayList;
     private Context context;
 
+    /**
+     * Constructor for RecyclerView
+     * @param context - Activity where views are created
+     * @param arrayList - Objects for which views should be created
+     */
     public RecyclerView_Adapter(Context context,
                                 ArrayList<RestaurantInfo> arrayList) {
         this.context = context;
         this.arrayList = arrayList;
     }
 
-
+    /**
+     * Gets number of views that should be created
+     * @return - int - number of items
+     */
     @Override
     public int getItemCount() {
         return (null != arrayList ? arrayList.size() : 0);
 
     }
 
+    /**
+     * Handles logic after view creation
+     * @param holder - layout that controls view
+     * @param position - number of item in ArrayList
+     */
     @Override
     public void onBindViewHolder(ViewHolder holder,
                                  final int position) {
@@ -49,6 +60,9 @@ public class RecyclerView_Adapter extends
         });*/
     }
 
+    /**
+     * Creates new view in current layout
+     */
     @Override
     public ViewHolder onCreateViewHolder(
             ViewGroup viewGroup, int viewType) {

@@ -46,25 +46,69 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
 
+/**
+ * Main screen of application containing two TextViews for user query and IP server (optional).
+ */
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
 
+    /**
+     * Code used in requesting runtime permissions.
+     */
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 34;
+
+    /**
+     * Constant used in the location settings dialog.
+     */
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
+
+    /**
+     * The desired interval for location updates. Inexact. Updates may be more or less frequent.
+     */
     private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 10000;
+
+    /**
+     * The fastest rate for active location updates. Exact. Updates will never be more frequent
+     * than this value.
+     */
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2;
 
     private final static String KEY_REQUESTING_LOCATION_UPDATES = "requesting-location-updates";
     private final static String KEY_LOCATION = "location";
 
+    /**
+     * Provides access to the Fused Location Provider API.
+     */
     private FusedLocationProviderClient mFusedLocationClient;
+
+    /**
+     * Provides access to the Location Settings API.
+     */
     private SettingsClient mSettingsClient;
+
+    /**
+     * Stores parameters for requests to the FusedLocationProviderApi.
+     */
     private LocationRequest mLocationRequest;
+
+    /**
+     * Stores the types of location services the client is interested in using. Used for checking
+     * settings to determine if the device has optimal location settings.
+     */
     private LocationSettingsRequest mLocationSettingsRequest;
+
+    /**
+     * Callback for Location events.
+     */
     private LocationCallback mLocationCallback;
+
+    /**
+     * Represents a geographical location.
+     */
     private Location mCurrentLocation;
+
     public static double latitude;
     public static double longitude;
     public static Context mContext;
@@ -75,8 +119,15 @@ public class MainActivity extends AppCompatActivity {
     private Button mSearchButton;
     private EditText mSearchQuery;
 
+    /**
+     * Tracks the status of the location updates request.
+     */
     private Boolean mRequestingLocationUpdates;
 
+    /**
+     * Called automatically at application start to initialize main screen
+     * @param savedInstanceState - saves screen state
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -109,10 +160,19 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Gets MainActivity context for use in other methods
+     * @return context of MainActivity
+     */
     public static Context getAppContext() {
         return MainActivity.mContext;
     }
 
+    /**
+     * Updates fields based on data stored in the bundle.
+     *
+     * @param savedInstanceState The activity state saved in the Bundle.
+     */
     private void updateValuesFromBundle(Bundle savedInstanceState) {
         if (savedInstanceState != null) {
             if (savedInstanceState.keySet().contains(KEY_REQUESTING_LOCATION_UPDATES)) {
@@ -126,16 +186,28 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Does JSON request and response handling in separate from main UI thread
+     */
     class AsyncJSON extends AsyncTask<Void, Void, Void> {
 
         private ProgressDialog dialog;
 
+        /**
+         * Creats informative Progress Dialog while making server request
+         */
         protected void onPreExecute() {
             dialog = new ProgressDialog(MainActivity.getAppContext());
             this.dialog.setMessage("Waiting for server response...");
             this.dialog.show();
         }
 
+        /**
+         * Creating socket connection with server, constructing JSON object and sending
+         * it to a server
+         * @param voids - empty argument
+         * @return - null
+         */
         @Override
         protected Void doInBackground(Void... voids) {
             final JSONObject json = new JSONObject();
@@ -160,11 +232,8 @@ public class MainActivity extends AppCompatActivity {
                 json.put("location", main);
 
                 os.writeInt(json.toString().getBytes().length);
-                Log.i(TAG, String.valueOf(json.toString().getBytes().length));
                 os.write(json.toString().getBytes());
                 os.flush();
-                Log.i(TAG, json.toString());
-                Log.i(TAG, "WE DID IT REDDIT!" + String.valueOf(resultLen));
                 resultLen = is.readInt();
                 result = new byte[resultLen];
                 is.readFully(result);
@@ -174,15 +243,13 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-            try {
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
             return null;
         }
 
+        /**
+         * Closes Progress Dialog, parses server response into JSONObject and passes it to next activity
+         * @param aVoid - empty argument
+         */
         @Override
         protected void onPostExecute(Void aVoid){
             super.onPostExecute(aVoid);
@@ -191,7 +258,6 @@ public class MainActivity extends AppCompatActivity {
             }
             try {
                 JSONObject res = new JSONObject(new String(result));
-                //Log.i("TAG", res.get("data").toString());
                 if ((res.get("data").toString().equals("[]"))) {
                     Toast.makeText(MainActivity.getAppContext(), "We haven't found anything, try again!", Toast.LENGTH_LONG).show();
                     return;
@@ -207,6 +273,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Creates location requests to handle user's GPS data
+     */
     private void createLocationRequest() {
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(UPDATE_INTERVAL_IN_MILLISECONDS);
@@ -214,6 +283,9 @@ public class MainActivity extends AppCompatActivity {
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 
+    /**
+     * Creates location callback to be able to get user's GPS data
+     */
     private void createLocationCallback() {
         mLocationCallback = new LocationCallback() {
             @Override
@@ -225,22 +297,29 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
+    /**
+     * Creats request to get user's geolocation
+     */
     private void buildLocationSettingsRequest() {
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
         builder.addLocationRequest(mLocationRequest);
         mLocationSettingsRequest = builder.build();
     }
 
+    /**
+     * Handle location variables
+     * @param requestCode - always REQUEST_CHECK_SETTINGS
+     * @param resultCode - contains information if user accepted location request
+     * @param data - contains Intent where it was created
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
             case REQUEST_CHECK_SETTINGS:
                 switch (resultCode) {
                     case Activity.RESULT_OK:
-                        Log.i(TAG, "User agreed to make required location settings changes.");
                         break;
                     case Activity.RESULT_CANCELED:
-                        Log.i(TAG, "User chose not to make required location settings changes.");
                         mRequestingLocationUpdates = false;
                         break;
                 }
@@ -248,12 +327,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Starts location updates, requesting user's geolocation in certain time periods
+     */
     private void startLocationUpdates() {
         mSettingsClient.checkLocationSettings(mLocationSettingsRequest)
                 .addOnSuccessListener(this, new OnSuccessListener<LocationSettingsResponse>() {
                     @Override
                     public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
-                        Log.i(TAG, "All location settings are satisfied.");
 
                         mFusedLocationClient.requestLocationUpdates(mLocationRequest,
                                 mLocationCallback, Looper.myLooper());
@@ -266,8 +347,6 @@ public class MainActivity extends AppCompatActivity {
                         int statusCode = ((ApiException) e).getStatusCode();
                         switch (statusCode) {
                             case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                                Log.i(TAG, "Location settings are not satisfied. Attempting to upgrade " +
-                                        "location settings ");
                                 try {
                                     ResolvableApiException rae = (ResolvableApiException) e;
                                     rae.startResolutionForResult(MainActivity.this, REQUEST_CHECK_SETTINGS);
@@ -287,6 +366,9 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Gets users last location and stores it, latitude and longitude in class members
+     */
     @SuppressWarnings("MissingPermission")
     public void getLastLocation() {
         mFusedLocationClient.getLastLocation()
@@ -304,6 +386,9 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Stop location updates to stop updating user's geolocation requests
+     */
     private void stopLocationUpdates() {
         if (!mRequestingLocationUpdates) {
             Log.d(TAG, "stopLocationUpdates: updates never requested, no-op.");
@@ -319,6 +404,9 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Called every time user reopens application
+     */
     @Override
     public void onResume() {
         super.onResume();
@@ -331,18 +419,30 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Called everytime user pauses application and stops location updates
+     */
     @Override
     protected void onPause() {
         super.onPause();
         stopLocationUpdates();
     }
 
+    /**
+     * Stores activity data in the Bundle.
+     */
     public void onSaveInstanceState(Bundle savedInstanceState) {
         savedInstanceState.putBoolean(KEY_REQUESTING_LOCATION_UPDATES, mRequestingLocationUpdates);
         savedInstanceState.putParcelable(KEY_LOCATION, mCurrentLocation);
         super.onSaveInstanceState(savedInstanceState);
     }
 
+    /**
+     * Handles snackbar creation
+     * @param mainTextStringId - The id for the string resource for the Snackbar text.
+     * @param actionStringId - The text of the action item.
+     * @param listener - The listener associated with the Snackbar action.
+     */
     private void showSnackbar(final int mainTextStringId, final int actionStringId,
                               View.OnClickListener listener) {
         Snackbar.make(
@@ -352,12 +452,18 @@ public class MainActivity extends AppCompatActivity {
                 .setAction(getString(actionStringId), listener).show();
     }
 
+    /**
+     * Return the current state of the permissions needed.
+     */
     private boolean checkPermissions() {
         int permissionState = ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION);
         return permissionState == PackageManager.PERMISSION_GRANTED;
     }
 
+    /**
+     * Requests location update permission
+     */
     private void requestPermissions() {
         boolean shouldProvideRationale =
                 ActivityCompat.shouldShowRequestPermissionRationale(this,
@@ -382,6 +488,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Callback received when a permissions request has been completed.
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {

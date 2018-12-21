@@ -29,12 +29,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Stores data about restaurant and defines a method to compare them by price of a meal
+ */
 class RestaurantInfo implements Comparable {
     public String restName;
     public String address;
     public String price;
     public String meal;
-    //public Geocoder coder = new Geocoder(ResultActivity.getAppContext());
 
     public String getMeal() {
         return meal;
@@ -109,12 +111,20 @@ class RestaurantInfo implements Comparable {
 
         return resS[0] < resF[0] ? -1 : 1;
     }*/
+
+    /**
+     * Compares two restaurant by price of meals
+     * @param o - Object to compare with
+     */
     @Override
     public int compareTo(Object o) {
         return (Float.valueOf(getPrice()) < Float.valueOf(((RestaurantInfo) o).getPrice())) ? -1 : 1;
     }
 }
 
+/**
+ * Defines Activity that shows results of user query
+ */
 public class ResultActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private RecyclerView mUserListRecyclerView;
@@ -131,6 +141,9 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
     private static TabLayout tabLayout;
     public ArrayList<Object[]> markers = new ArrayList<>();
 
+    /**
+     * Automatically called after intent start in previous activity.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -196,10 +209,18 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
         });
     }
 
+    /**
+     * Gets Activity context
+     */
     public static Context getAppContext() {
         return ResultActivity.mContext;
     }
 
+    /**
+     * Get coordinates from address passed in a string
+     * @param strAddress - String address
+     * @return LatLng Object (two coordinates)
+     */
     public LatLng getLocationFromAddress(String strAddress) {
 
         List<Address> address;
@@ -229,6 +250,9 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
         return p1;
     }
 
+    /**
+     * Sets up TabLayout with two tabs
+     */
     private void setupViewPager(ViewPager viewPager) {
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
         adapter.addFrag(new DummyFragment("PRICE"), "Cheapest");
@@ -236,13 +260,12 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
         viewPager.setAdapter(adapter);
     }
 
+    /**
+     * Creates Google Map v2 fragment in top half screen and puts markers of restaurants
+     */
     @Override
     public void onMapReady(GoogleMap map) {
         mGoogleMap = map;
-        /*if (MainActivity.latitude != 0) {
-            LatLng point = new LatLng(MainActivity.latitude, MainActivity.longitude);
-            map.animateCamera(CameraUpdateFactory.newLatLngZoom(point,11));
-        }*/
         for (int i = 0; i < markers.size(); i++) {
             LatLng pt = (LatLng) markers.get(i)[0];
             String name = (String) markers.get(i)[1];
@@ -253,12 +276,9 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
         map.setMyLocationEnabled(true);
     }
 
-    public void setMarkerMap(GoogleMap map) {
-        mGoogleMap = map;
-        LatLng point = new LatLng(MainActivity.latitude, MainActivity.longitude);
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(point,11));
-    }
-
+    /**
+     * Handles tabs creation
+     */
     class ViewPagerAdapter extends FragmentPagerAdapter {
         private final List<Fragment> mFragmentList = new ArrayList<>();
         private final List<String> mFragmentTitleList = new ArrayList<>();
@@ -277,27 +297,21 @@ public class ResultActivity extends AppCompatActivity implements OnMapReadyCallb
             return mFragmentList.size();
         }
 
-
+        /**
+         * Adds a tab with specified title
+         */
         public void addFrag(Fragment fragment, String title) {
             mFragmentList.add(fragment);
             mFragmentTitleList.add(title);
         }
 
+        /**
+         * Gets tab's title
+         */
         @Override
         public CharSequence getPageTitle(int position) {
             return mFragmentTitleList.get(position);
         }
     }
 
-    public void markerOnMap(GoogleMap map) {
-        map.clear();
-        for (int i = 0; i < 3; i++) {
-            double lat = Math.random();
-            double lon = Math.random();
-            LatLng point = new LatLng(50 + lat, 30 + lon);
-            lPoint = point;
-            map.addMarker(new MarkerOptions().position(point).title("Ресторан"));
-        }
-        map.animateCamera(CameraUpdateFactory.newLatLngZoom(lPoint, 11));
-    }
 }
